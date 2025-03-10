@@ -22,12 +22,13 @@ jobs:
         run: |
           git fetch origin memes
           git checkout memes
-          mkdir -p memes
-          ls -l  # Debug: Check if the files exist
+          mkdir -p memes_folder  # Renaming the folder to avoid confusion
+          mv memes/* memes_folder/ 2>/dev/null || true  # Move existing files if they exist
+          ls -l memes_folder  # Debug: Check if the files exist
 
       - name: Generate meme index
         run: |
-          cd memes
+          cd memes_folder
           echo "[" > index.json
           for file in *.jpg *.png *.gif *.mp3 *.ogg *.wav *.mp4 *.webm *.mkv; do
             if [ -f "$file" ]; then
