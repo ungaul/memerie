@@ -3,8 +3,11 @@ name: Generate Meme Index
 on:
   push:
     branches:
-      - memes  # Se déclenche quand on ajoute un fichier à la branche "memes"
-  workflow_dispatch:  # Permet de le lancer manuellement depuis l'onglet Actions
+      - memes
+  workflow_dispatch:
+
+permissions:
+  contents: write  # 🔥 Donne l'autorisation d'écriture à GitHub Actions
 
 jobs:
   update-index:
@@ -13,13 +16,13 @@ jobs:
       - name: Checkout repository (Fetch all branches)
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Récupère toutes les branches pour éviter les erreurs
+          fetch-depth: 0  # Récupère toutes les branches
 
       - name: Checkout memes branch
         run: |
           git fetch origin memes  # Récupère la branche "memes"
-          git checkout memes  # Bascule sur "memes"
-          mkdir -p memes  # S'assure que le dossier existe
+          git checkout memes  # Se placer sur "memes"
+          mkdir -p memes  # Assure que le dossier existe
           ls -l  # Debug : Vérifie que les fichiers sont bien là
 
       - name: Generate meme index
@@ -47,5 +50,5 @@ jobs:
           git add memes/index.json
           git commit -m "Mise à jour automatique de index.json" || echo "Aucune modification à valider"
 
-          # Ajout du token pour l'authentification
+          # 🔥 Utilisation du token pour push avec permissions
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git memes
