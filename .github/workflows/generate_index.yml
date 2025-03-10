@@ -22,9 +22,9 @@ jobs:
         run: |
           git fetch origin memes
           git checkout memes
-          mkdir -p memes_folder  # Rename working directory to avoid conflicts
+          mkdir -p memes_folder  # Ensure the working directory exists
           mv memes/* memes_folder/ 2>/dev/null || true  # Move files if they exist
-          ls -l memes_folder  # Debug: Check if the files exist
+          ls -l memes_folder  # Debug: List files in memes_folder
 
       - name: Generate meme index
         run: |
@@ -46,16 +46,16 @@ jobs:
           done
           sed -i '$ s/,$//' index.json  # Remove last comma
           echo "]" >> index.json
-          mv index.json ../index.json
+          mv index.json ../index.json  # Move index.json outside of memes_folder
 
-      - name: Commit and push index.json
+      - name: Commit and push index.json to main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git checkout main
-          mv index.json
+          mv index.json .  # Ensure it's in the root of main
           git add index.json
           git commit -m "Automatic update of index.json" || echo "No changes to commit"
           git push origin main
