@@ -54,8 +54,17 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
+
+          # Temporarily stash changes before switching branches
+          git stash push -m "Stashing index.json update"
+
+          # Switch to main branch safely
           git checkout main
-          mv index.json .  # Ensure it's in the root of main
+
+          # Apply the stash to get back the latest index.json
+          git stash pop || echo "No stash found"
+
+          # Ensure index.json is in the root
           git add index.json
-          git commit -m "Automatic update of index.json" || echo "No changes to commit"
+          git commit -m "Updated index.json with latest meme data" || echo "No changes to commit"
           git push origin main
