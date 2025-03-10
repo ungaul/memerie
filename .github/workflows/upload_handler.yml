@@ -1,0 +1,43 @@
+name: Process Upload Requests
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+
+jobs:
+  process-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: memes  # Ensure we work on the memes branch
+
+      - name: Extract file data from issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          ISSUE_BODY=$(gh issue view $ISSUE_NUMBER --json body -q '.body')
+
+          # Extract file details from the issue
+          FILE_NAME=$(echo "$ISSUE_BODY" | grep -oP '(?<=**File Name:** ).*')
+          BASE64_CONTENT=$(echo "$ISSUE_BODY" | grep -oP '(?<=**Base64 Content:** ).*' | tr -d ' ')
+
+          echo "Processing file: $FILE_NAME"
+          echo "$BASE64_CONTENT" | base64 --decode > memes_folder/$FILE_NAME
+
+          # Commit and push the file to the memes branch
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add memes_folder/$FILE_NAME
+          git commit -m "Added $FILE_NAME via upload request"
+          git push origin memes
+
+      - name: Close Issue
+        run: |
+          gh issue close ${{ github.event.issue.number }} --comment "File $FILE_NAME has been uploaded to memes_folder/"

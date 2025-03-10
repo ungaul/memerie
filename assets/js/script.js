@@ -104,7 +104,7 @@ $(document).ready(async function() {
         $(this).toggleClass("active");
     });
 
-    // Handle upload submission
+    // Handle upload submission to GitHub
     uploadSubmit.on("click", async function() {
         let selectedTags = [];
         $("#upload-tags .tag.active").each(function() {
@@ -123,25 +123,33 @@ $(document).ready(async function() {
             return;
         }
 
-        let formData = new FormData();
-        formData.append("file", file);
-        formData.append("title", title);
-        formData.append("tags", selectedTags.join(","));
+        let reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async function() {
+            let base64File = reader.result.split(",")[1];
 
-        try {
-            let response = await fetch("https://api.github.com/repos/ungaul/memerie/contents/memes/memes_folder/", {
-                method: "POST",
-                body: formData
+            let githubApiUrl = "https://api.github.com/repos/ungaul/memerie/contents/memes_folder/" + file.name;
+
+            let response = await fetch(githubApiUrl, {
+                method: "PUT",
+                headers: {
+                    "Authorization": "token YOUR_GITHUB_TOKEN",
+                    "Accept": "application/vnd.github.v3+json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Uploading new file: " + file.name,
+                    content: base64File,
+                    branch: "memes"
+                })
             });
+
             let result = await response.json();
-            if (result.success) {
+            if (response.ok) {
                 alert("Upload successful!");
             } else {
-                alert("Upload failed: " + result.error);
+                alert("Upload failed: " + result.message);
             }
-        } catch (error) {
-            console.error("Upload error: ", error);
-            alert("Upload failed.");
-        }
+        };
     });
 });
