@@ -38,7 +38,7 @@ header {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1;
+    z-index: 2;
     position: sticky;
     top: 0;
 }
@@ -74,6 +74,10 @@ p {
     margin: 0;
 }
 
+button{
+    user-select: none;
+}
+
 .separator {
     background: var(--sixth);
     height: 1px;
@@ -89,7 +93,7 @@ p {
     text-transform: lowercase;
     font-weight: 600;
     height: 60%;
-    color: var(--first);
+    color: var(--second);
     width: var(--search-width);
 }
 
@@ -171,10 +175,59 @@ button:hover {
     column-gap: 8px;
 }
 
-#query{
+#query {
     color: var(--second);
 }
 
-#results{
+#results {
     color: var(--sixth);
+}
+
+#upload {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    z-index: -1;
+}
+
+#upload.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+#upload-content {
+    background: var(--fifth);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    gap: 5px;
+    min-width: 50vw;
+}
+
+#upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#upload-title {
+    background: transparent;
+    border: none;
+    color: var(--sixth);
+    font-weight: 800;
+    font-size: 18px;
+    text-transform: lowercase;
+    margin: 0;
+}
+
+#upload-title:focus, #upload-title:focus{
+    outline: none;
 }

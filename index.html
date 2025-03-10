@@ -1,15 +1,16 @@
 <html>
 
 <head>
-    <title>Factorio</title>
+    <title>La memerie</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/img/favicon.png">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/img/favicon.png" sizes="144x144">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="assets/js/script.js"></script>
+    <script src="assets/js/anim.js"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/v2.css">
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
@@ -17,6 +18,29 @@
 </head>
 
 <body>
+    <div id="upload">
+        <div id="upload-content">
+            <h2>Upload a meme</h2>
+            <div class="separator"></div>
+            <form id="upload-form">
+                <input type="text" id="upload-title" placeholder="Title">
+                <div id="categories">
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                </div>
+                <button id="upload-submit">Upload</button>
+            </form>
+        </div>
+    </div>
+
     <header>
         <!-- <h1>Memerie</h1> -->
         <img src="assets/img/logo.jpg" alt="Logo">
