@@ -37,7 +37,7 @@ jobs:
               date=$(date -r "$file" +"%Y-%m-%d %H:%M:%S")
               echo "  {" >> index.json
               echo "    \"name\": \"$filename\"," >> index.json
-              echo "    \"url\": \"https://raw.githubusercontent.com/${{ github.repository }}/memes/memes/$file\"," >> index.json
+              echo "    \"url\": \"https://raw.githubusercontent.com/${{ github.repository }}/memes/memes_folder/$file\"," >> index.json
               echo "    \"title\": \"$title\"," >> index.json
               echo "    \"date\": \"$date\"," >> index.json
               echo "    \"hashtags\": []" >> index.json  # Placeholder for hashtags
