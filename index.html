@@ -12,21 +12,132 @@
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/v2.css">
     <script src="assets/js/script.js"></script>
 </head>
 
 <body>
-    <h1>Meme Archive 📂</h1>
-
-    <!-- Barre de recherche -->
-    <input type="text" id="searchBar" placeholder="Rechercher un mème...">
-
-    <!-- Formulaire d'upload -->
-    <input type="file" id="uploadFile">
-    <button onclick="uploadMeme()">Uploader un mème</button>
-
-    <!-- Zone d'affichage des mèmes -->
-    <div id="meme-container"></div>
+    <header>
+        <!-- <h1>Memerie</h1> -->
+        <img src="assets/img/logo.jpg" alt="Logo">
+        <input type="text" id="searchBar" placeholder="Search...">
+        <div id="search-results" class="disabled">
+            <div class="search-result">
+                <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
+                <div class="metadata">
+                    <p>Test</p>
+                    <div class="categories">
+                        <div class="category">Drole</div>
+                        <div class="category">zoomer</div>
+                    </div>
+                </div>
+            </div>
+            <div class="search-result">
+                <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
+                <div class="metadata">
+                    <p>Test</p>
+                    <div class="categories">
+                        <div class="category">Drole</div>
+                        <div class="category">zoomer</div>
+                    </div>
+                </div>
+            </div>
+            <div class="search-result">
+                <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
+                <div class="metadata">
+                    <p>Test</p>
+                    <div class="categories">
+                        <div class="category">Drole</div>
+                        <div class="category">zoomer</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="app">
+        <div id="left">
+            <div id="left-content">
+                <button id="uploadFile">Add Meme</button>
+                <div id="meme-list-container">
+                    <h2>Meme catalog</h2>
+                    <div class="separator"></div>
+                    <div id="meme-list">
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                        <p>Test</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="middle">
+            <div id="search">
+                <h2 id="query">#test</h2>
+                <p id="results">14 results found</p>
+            </div>
+            <div class="separator"></div>
+            <div id="search-results">
+                <div class="search-result">
+                    <video src="https://github.com/ungaul/memerie/raw/refs/heads/memes/memes/14%20yo%20Rave%20Party%20Streamer.mp4" autoplay muted controls alt="Meme"></video>
+                    <div class="metadata">
+                        <p>Test</p>
+                        <div class="categories">
+                            <div class="category">Drole</div>
+                            <div class="category">zoomer</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="search-result">
+                    <audio src="https://github.com/ungaul/memerie/raw/refs/heads/memes/memes/Bruits%20dr%C3%B4les.mp3" controls alt="Meme"></audio>
+                    <div class="metadata">
+                        <p>Test</p>
+                        <div class="categories">
+                            <div class="category">Drole</div>
+                            <div class="category">zoomer</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="search-result">
+                    <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
+                    <div class="metadata">
+                        <p>Test</p>
+                        <div class="categories">
+                            <div class="category">Drole</div>
+                            <div class="category">zoomer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="right">
+            <div id="right-content">
+                <h2>trending channels</h2>
+                <div id="categories">
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                    <div class="category">Drole</div>
+                    <div class="category">Zoomer</div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

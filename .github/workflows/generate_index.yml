@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write  # 🔥 Donne l'autorisation d'écriture à GitHub Actions
+  contents: write
 
 jobs:
   update-index:
@@ -16,25 +16,34 @@ jobs:
       - name: Checkout repository (Fetch all branches)
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Récupère toutes les branches
+          fetch-depth: 0
 
       - name: Checkout memes branch
         run: |
-          git fetch origin memes  # Récupère la branche "memes"
-          git checkout memes  # Se placer sur "memes"
-          mkdir -p memes  # Assure que le dossier existe
-          ls -l  # Debug : Vérifie que les fichiers sont bien là
+          git fetch origin memes
+          git checkout memes
+          mkdir -p memes
+          ls -l  # Debug: Check if the files exist
 
       - name: Generate meme index
         run: |
           cd memes
           echo "[" > index.json
-          for file in *.jpg *.png *.gif; do
+          for file in *.jpg *.png *.gif *.mp3 *.ogg *.wav *.mp4 *.webm *.mkv; do
             if [ -f "$file" ]; then
-              echo "  {\"name\": \"$file\", \"url\": \"https://raw.githubusercontent.com/${{ github.repository }}/memes/main/$file\"}," >> index.json
+              filename=$(basename -- "$file")
+              title="${filename%.*}"  # Remove file extension for title
+              date=$(date -r "$file" +"%Y-%m-%d %H:%M:%S")
+              echo "  {" >> index.json
+              echo "    \"name\": \"$filename\"," >> index.json
+              echo "    \"url\": \"https://raw.githubusercontent.com/${{ github.repository }}/memes/main/$file\"," >> index.json
+              echo "    \"title\": \"$title\"," >> index.json
+              echo "    \"date\": \"$date\"," >> index.json
+              echo "    \"hashtags\": []" >> index.json  # Placeholder for hashtags
+              echo "  }," >> index.json
             fi
           done
-          sed -i '$ s/,$//' index.json  # Supprime la dernière virgule
+          sed -i '$ s/,$//' index.json  # Remove last comma
           echo "]" >> index.json
           mv index.json ../index.json
 
@@ -44,11 +53,9 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git checkout memes  # Assurer qu'on est bien dans `memes`
-
-          mv index.json memes/  # Déplacer `index.json` dans `memes`
+          git checkout main
+          mkdir -p memes
+          mv index.json memes/
           git add memes/index.json
-          git commit -m "Mise à jour automatique de index.json" || echo "Aucune modification à valider"
-
-          # 🔥 Utilisation du token pour push avec permissions
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git memes
+          git commit -m "Automatic update of index.json" || echo "No changes to commit"
+          git push origin main
