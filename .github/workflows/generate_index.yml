@@ -36,12 +36,16 @@ jobs:
           mv index.json ../index.json
 
       - name: Commit and push index.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git checkout memes  # Reste bien sur `memes`
+          git checkout memes  # Assurer qu'on est bien dans `memes`
 
-          mv index.json memes/  # Déplace `index.json` dans `memes`
+          mv index.json memes/  # Déplacer `index.json` dans `memes`
           git add memes/index.json
           git commit -m "Mise à jour automatique de index.json" || echo "Aucune modification à valider"
-          git push origin memes  # Pousse uniquement sur `memes`
+
+          # Ajout du token pour l'authentification
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git memes
