@@ -1,0 +1,35 @@
+name: Generate Meme Index
+on:
+  push:
+    branches:
+      - memes
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate meme index
+        run: |
+          cd memes
+          echo "[" > index.json
+          for file in *.jpg *.png *.gif; do
+            if [ -f "$file" ]; then
+              echo "  {\"name\": \"$file\", \"url\": \"https://raw.githubusercontent.com/${{ github.repository }}/memes/main/$file\"}," >> index.json
+            fi
+          done
+          sed -i '$ s/,$//' index.json
+          echo "]" >> index.json
+          mv index.json ../index.json
+
+      - name: Commit and push index.json
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git checkout main
+          mv index.json memes/
+          git add memes/index.json
+          git commit -m "Auto updating index.json"
+          git push
