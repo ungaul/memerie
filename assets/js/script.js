@@ -11,12 +11,10 @@ $(document).ready(async function () {
     const notification = $("#notification");
 
     let memes = [];
-    let selectedFile = null; // Store the selected file
+    let selectedFile = null;
 
-    // Railway backend URL
-    const RAILWAY_BACKEND_URL = "https://your-railway-app-url/upload"; // Change this!
+    const NETLIFY_BACKEND_URL = "/.netlify/functions/server";
 
-    // Fetch the index.json file from GitHub
     async function fetchMemes() {
         try {
             const response = await $.getJSON("index.json");
@@ -32,12 +30,10 @@ $(document).ready(async function () {
 
     await fetchMemes();
 
-    // Normalize search input (remove accents, make lowercase)
     function normalizeText(text) {
         return typeof text === "string" ? text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase() : "";
     }
 
-    // Handle search bar input
     searchBar.on("input", function () {
         const query = normalizeText($(this).val());
         queryDisplay.text(`#${query}`);
@@ -80,7 +76,6 @@ $(document).ready(async function () {
         });
     }
 
-    // Handle URL parameters for search query
     const params = new URLSearchParams(window.location.search);
     if (params.has("query")) {
         const query = params.get("query");
@@ -89,26 +84,23 @@ $(document).ready(async function () {
         updateSearchResults(normalizeText(query));
     }
 
-    // Handle file selection for upload
     uploadFile.on("click", function () {
         let fileInput = $("<input>").attr({ type: "file", accept: "image/*,video/*,audio/*" });
         fileInput.on("change", function (event) {
-            selectedFile = event.target.files[0]; // Store the selected file
+            selectedFile = event.target.files[0];
             if (!selectedFile) return;
 
-            let fileName = selectedFile.name.split(".")[0]; // Remove extension
+            let fileName = selectedFile.name.split(".")[0];
             uploadTitle.val(fileName);
             uploadContainer.addClass("active");
         });
         fileInput.trigger("click");
     });
 
-    // Toggle active class for selected tags
     $(document).on("click", ".category", function () {
         $(this).toggleClass("active");
     });
 
-    // Handle upload submission to Railway
     uploadSubmit.on("click", async function () {
         let selectedTags = [];
         $(".category.active").each(function () {
@@ -125,7 +117,6 @@ $(document).ready(async function () {
             return;
         }
 
-        // Limit file size (5MB max)
         if (selectedFile.size > 5 * 1024 * 1024) {
             alert("File too large! Max size is 5MB.");
             return;
@@ -136,12 +127,12 @@ $(document).ready(async function () {
         reader.onload = async function () {
             let base64File = reader.result.split(",")[1];
 
-            let fileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_"); // Clean filename
+            let fileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-            console.log("Uploading to Railway Backend...");
+            console.log("Uploading to Netlify Backend...");
 
             try {
-                let response = await fetch(RAILWAY_BACKEND_URL, {
+                let response = await fetch(NETLIFY_BACKEND_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fileName, fileContent: base64File })
@@ -150,8 +141,6 @@ $(document).ready(async function () {
                 let result = await response.json();
                 if (result.success) {
                     alert("Upload successful! File URL: " + result.url);
-
-                    // Show notification for 5 seconds
                     notification.addClass("active");
                     setTimeout(() => {
                         notification.removeClass("active");
