@@ -1,8 +1,7 @@
 [build]
-  command = "npm install"
+  command = ""
   functions = "netlify/functions"
   publish = "."
 
-[dev]
-  framework = "custom"
-  command = "npm start"
+[functions]
+  node_bundler = "esbuild"
