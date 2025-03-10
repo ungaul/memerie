@@ -126,10 +126,12 @@ $(document).ready(async function () {
         reader.readAsDataURL(selectedFile);
         reader.onload = async function () {
             let base64File = reader.result.split(",")[1];
-
             let fileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
 
-            console.log("Uploading to Netlify Backend...");
+            console.log("📤 Sending Data to Netlify Backend:");
+            console.log("🔹 File Name:", fileName);
+            console.log("🔹 File Size:", selectedFile.size);
+            console.log("🔹 Base64 Content (truncated):", base64File.substring(0, 100) + "...");
 
             try {
                 let response = await fetch("https://memerie.netlify.app/.netlify/functions/server", {
@@ -139,17 +141,17 @@ $(document).ready(async function () {
                 });
 
                 let result = await response.json();
+                console.log("🔹 Server Response:", result);
+
                 if (result.success) {
                     alert("Upload successful! File URL: " + result.url);
                     notification.addClass("active");
-                    setTimeout(() => {
-                        notification.removeClass("active");
-                    }, 5000);
+                    setTimeout(() => { notification.removeClass("active"); }, 5000);
                 } else {
                     throw new Error(result.error);
                 }
             } catch (error) {
-                console.error("Upload error: ", error);
+                console.error("❌ Upload error:", error);
                 alert("Upload failed.");
             }
         };
