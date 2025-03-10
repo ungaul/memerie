@@ -55,8 +55,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git checkout main
-          mkdir -p memes_folder
-          mv index.json memes_folder/
-          git add memes_folder/index.json
+          mv index.json
+          git add index.json
           git commit -m "Automatic update of index.json" || echo "No changes to commit"
           git push origin main
