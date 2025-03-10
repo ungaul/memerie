@@ -1,6 +1,5 @@
 $(document).ready(async function () {
     const searchBar = $("#searchBar");
-    const searchResultsContainer = $("#search-results");
     const queryDisplay = $("#query");
     const resultsDisplay = $("#results");
     const searchResults = $("#search-results");
@@ -13,6 +12,9 @@ $(document).ready(async function () {
 
     let memes = [];
     let selectedFile = null; // Store the selected file
+
+    // Railway backend URL
+    const RAILWAY_BACKEND_URL = "https://your-railway-app-url/upload"; // Change this!
 
     // Fetch the index.json file from GitHub
     async function fetchMemes() {
@@ -106,7 +108,7 @@ $(document).ready(async function () {
         $(this).toggleClass("active");
     });
 
-    // Handle upload submission to GitHub
+    // Handle upload submission to Railway
     uploadSubmit.on("click", async function () {
         let selectedTags = [];
         $(".category.active").each(function () {
@@ -123,38 +125,31 @@ $(document).ready(async function () {
             return;
         }
 
+        // Limit file size (5MB max)
+        if (selectedFile.size > 5 * 1024 * 1024) {
+            alert("File too large! Max size is 5MB.");
+            return;
+        }
+
         let reader = new FileReader();
         reader.readAsDataURL(selectedFile);
         reader.onload = async function () {
             let base64File = reader.result.split(",")[1];
 
-            let githubApiUrl = "https://api.github.com/repos/ungaul/memerie/contents/tmp/" + selectedFile.name;
+            let fileName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, "_"); // Clean filename
 
-            console.log("Uploading to:", githubApiUrl);
-            console.log("Branch: main (tmp folder)");
-            console.log("File Name:", selectedFile.name);
-            console.log("Base64 Content (truncated):", base64File.substring(0, 100) + "...");
+            console.log("Uploading to Railway Backend...");
 
             try {
-                let response = await fetch(githubApiUrl, {
-                    method: "PUT",
-                    headers: {
-                        "Authorization": "token YOUR_GITHUB_TOKEN",
-                        "Accept": "application/vnd.github.v3+json",
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: "Uploading file to tmp: " + selectedFile.name,
-                        content: base64File,
-                        branch: "main"
-                    })
+                let response = await fetch(RAILWAY_BACKEND_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileName, fileContent: base64File })
                 });
 
                 let result = await response.json();
-                console.log("GitHub Response:", result);
-
-                if (response.ok) {
-                    alert("Upload successful! File will be processed.");
+                if (result.success) {
+                    alert("Upload successful! File URL: " + result.url);
 
                     // Show notification for 5 seconds
                     notification.addClass("active");
@@ -162,7 +157,7 @@ $(document).ready(async function () {
                         notification.removeClass("active");
                     }, 5000);
                 } else {
-                    alert("Upload failed: " + result.message);
+                    throw new Error(result.error);
                 }
             } catch (error) {
                 console.error("Upload error: ", error);
