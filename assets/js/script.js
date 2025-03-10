@@ -132,7 +132,7 @@ $(document).ready(async function () {
             console.log("Uploading to Netlify Backend...");
 
             try {
-                let response = await fetch(NETLIFY_BACKEND_URL, {
+                let response = await fetch("https://memerie.netlify.app/.netlify/functions/server", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ fileName, fileContent: base64File })
