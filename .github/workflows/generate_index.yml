@@ -9,8 +9,16 @@ jobs:
   update-index:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (Main)
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Assure d'avoir accès à toutes les branches
+
+      - name: Checkout memes branch
+        run: |
+          git fetch origin memes  # Récupère la branche "memes"
+          git checkout memes  # Bascule sur "memes"
+          mkdir -p memes  # Crée le dossier si besoin
 
       - name: Generate meme index
         run: |
@@ -21,7 +29,7 @@ jobs:
               echo "  {\"name\": \"$file\", \"url\": \"https://raw.githubusercontent.com/${{ github.repository }}/memes/main/$file\"}," >> index.json
             fi
           done
-          sed -i '$ s/,$//' index.json
+          sed -i '$ s/,$//' index.json  # Supprime la dernière virgule
           echo "]" >> index.json
           mv index.json ../index.json
 
@@ -32,5 +40,5 @@ jobs:
           git checkout main
           mv index.json memes/
           git add memes/index.json
-          git commit -m "Auto updating index.json"
+          git commit -m "Mise à jour automatique de index.json" || echo "Aucune modification à valider"
           git push
