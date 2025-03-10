@@ -9,11 +9,11 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/img/favicon.png" sizes="144x144">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script src="assets/js/script.js"></script>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/v2.css">
-    <script src="assets/js/script.js"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
 
 <body>
@@ -21,38 +21,7 @@
         <!-- <h1>Memerie</h1> -->
         <img src="assets/img/logo.jpg" alt="Logo">
         <input type="text" id="searchBar" placeholder="Search...">
-        <div id="search-results" class="disabled">
-            <div class="search-result">
-                <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
-                <div class="metadata">
-                    <p>Test</p>
-                    <div class="categories">
-                        <div class="category">Drole</div>
-                        <div class="category">zoomer</div>
-                    </div>
-                </div>
-            </div>
-            <div class="search-result">
-                <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
-                <div class="metadata">
-                    <p>Test</p>
-                    <div class="categories">
-                        <div class="category">Drole</div>
-                        <div class="category">zoomer</div>
-                    </div>
-                </div>
-            </div>
-            <div class="search-result">
-                <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
-                <div class="metadata">
-                    <p>Test</p>
-                    <div class="categories">
-                        <div class="category">Drole</div>
-                        <div class="category">zoomer</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- <div id="search-results" class="disabled"></div> -->
     </header>
     <div id="app">
         <div id="left">
@@ -83,41 +52,11 @@
         </div>
         <div id="middle">
             <div id="search">
-                <h2 id="query">#test</h2>
-                <p id="results">14 results found</p>
+                <h2 id="query"></h2>
+                <p id="results"></p>
             </div>
             <div class="separator"></div>
             <div id="search-results">
-                <div class="search-result">
-                    <video src="https://github.com/ungaul/memerie/raw/refs/heads/memes/memes/14%20yo%20Rave%20Party%20Streamer.mp4" autoplay muted controls alt="Meme"></video>
-                    <div class="metadata">
-                        <p>Test</p>
-                        <div class="categories">
-                            <div class="category">Drole</div>
-                            <div class="category">zoomer</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="search-result">
-                    <audio src="https://github.com/ungaul/memerie/raw/refs/heads/memes/memes/Bruits%20dr%C3%B4les.mp3" controls alt="Meme"></audio>
-                    <div class="metadata">
-                        <p>Test</p>
-                        <div class="categories">
-                            <div class="category">Drole</div>
-                            <div class="category">zoomer</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="search-result">
-                    <img src="https://github.com/ungaul/memerie/blob/memes/memes/17%20and%20still%20no%20bitches.jpg?raw=true" alt="Meme">
-                    <div class="metadata">
-                        <p>Test</p>
-                        <div class="categories">
-                            <div class="category">Drole</div>
-                            <div class="category">zoomer</div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         <div id="right">

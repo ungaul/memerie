@@ -1,10 +1,10 @@
 {
-  "name": "Mapshot",
+  "name": "Memerie",
   "icons": [
     {
       "src": "assets/favicon.png",
       "type": "image/png",
-      "sizes": "1441x1440"
+      "sizes": "614x614"
     }
   ],
   "background_color": "#000000",
