@@ -11,12 +11,12 @@ exports.handler = async function (event) {
             return { statusCode: 400, body: "Missing parameters" };
         }
 
-        // Upload to GitHub
+        // Upload to GitHub (TMP folder, then move via GitHub Actions)
         const githubApiUrl = `https://api.github.com/repos/ungaul/memerie/contents/tmp/${fileName}`;
         const response = await fetch(githubApiUrl, {
             method: "PUT",
             headers: {
-                "Authorization": `token ${process.env.GITHUB_TOKEN}`,
+                "Authorization": `token ${process.env.GITHUB_TOKEN}`, // ✅ SECURE
                 "Accept": "application/vnd.github.v3+json",
                 "Content-Type": "application/json"
             },

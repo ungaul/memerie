@@ -1,5 +1,5 @@
 [build]
-  command = ""
+  command = "npm install"
   functions = "netlify/functions"
   publish = "."
 
