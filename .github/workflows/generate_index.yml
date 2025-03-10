@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - memes
+  workflow_dispatch:
 
 jobs:
   update-index:
