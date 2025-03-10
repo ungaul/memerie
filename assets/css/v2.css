@@ -44,7 +44,6 @@
     padding: 5px 10px;
     border-radius: 15px;
     font-size: 13px;
-    user-select: none;
 }
 
 .category:hover {

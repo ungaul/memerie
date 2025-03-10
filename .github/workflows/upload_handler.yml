@@ -1,43 +1,47 @@
-name: Process Upload Requests
+name: Move Uploaded Memes to memes_folder
 
 on:
-  issues:
-    types: [opened]
+  push:
+    branches:
+      - main
+    paths:
+      - 'tmp/**'
 
 permissions:
   contents: write
 
 jobs:
-  process-upload:
+  move-files:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout main branch
         uses: actions/checkout@v3
         with:
+          ref: main
           fetch-depth: 0
-          ref: memes  # Ensure we work on the memes branch
 
-      - name: Extract file data from issue
+      - name: Checkout memes branch
+        run: |
+          git fetch origin memes
+          git checkout memes
+          mkdir -p memes_folder
+
+      - name: Move files from tmp/ to memes_folder/
+        run: |
+          mv ../tmp/* memes_folder/ 2>/dev/null || echo "No files to move"
+
+      - name: Commit and push to memes branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ISSUE_NUMBER=${{ github.event.issue.number }}
-          ISSUE_BODY=$(gh issue view $ISSUE_NUMBER --json body -q '.body')
-
-          # Extract file details from the issue
-          FILE_NAME=$(echo "$ISSUE_BODY" | grep -oP '(?<=**File Name:** ).*')
-          BASE64_CONTENT=$(echo "$ISSUE_BODY" | grep -oP '(?<=**Base64 Content:** ).*' | tr -d ' ')
-
-          echo "Processing file: $FILE_NAME"
-          echo "$BASE64_CONTENT" | base64 --decode > memes_folder/$FILE_NAME
-
-          # Commit and push the file to the memes branch
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add memes_folder/$FILE_NAME
-          git commit -m "Added $FILE_NAME via upload request"
+          git add memes_folder/
+          git commit -m "Moved new uploads from tmp to memes_folder"
           git push origin memes
 
-      - name: Close Issue
+      - name: Cleanup tmp/ in main
         run: |
-          gh issue close ${{ github.event.issue.number }} --comment "File $FILE_NAME has been uploaded to memes_folder/"
+          git checkout main
+          rm -rf tmp/*
+          git add tmp/
+          git commit -m "Cleaned tmp after moving files" || echo "No files to delete"
+          git push origin main

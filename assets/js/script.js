@@ -1,4 +1,4 @@
-$(document).ready(async function() {
+$(document).ready(async function () {
     const searchBar = $("#searchBar");
     const searchResultsContainer = $("#search-results");
     const queryDisplay = $("#query");
@@ -9,8 +9,10 @@ $(document).ready(async function() {
     const uploadTitle = $("#upload-title");
     const uploadTags = $("#upload-tags");
     const uploadSubmit = $("#upload-submit");
+    const notification = $("#notification");
 
     let memes = [];
+    let selectedFile = null; // Store the selected file
 
     // Fetch the index.json file from GitHub
     async function fetchMemes() {
@@ -34,7 +36,7 @@ $(document).ready(async function() {
     }
 
     // Handle search bar input
-    searchBar.on("input", function() {
+    searchBar.on("input", function () {
         const query = normalizeText($(this).val());
         queryDisplay.text(`#${query}`);
         updateSearchResults(query);
@@ -86,13 +88,13 @@ $(document).ready(async function() {
     }
 
     // Handle file selection for upload
-    uploadFile.on("click", function() {
+    uploadFile.on("click", function () {
         let fileInput = $("<input>").attr({ type: "file", accept: "image/*,video/*,audio/*" });
-        fileInput.on("change", function(event) {
-            let file = event.target.files[0];
-            if (!file) return;
+        fileInput.on("change", function (event) {
+            selectedFile = event.target.files[0]; // Store the selected file
+            if (!selectedFile) return;
 
-            let fileName = file.name.split(".")[0]; // Remove extension
+            let fileName = selectedFile.name.split(".")[0]; // Remove extension
             uploadTitle.val(fileName);
             uploadContainer.addClass("active");
         });
@@ -100,14 +102,14 @@ $(document).ready(async function() {
     });
 
     // Toggle active class for selected tags
-    $(document).on("click", "#upload-tags .tag", function() {
+    $(document).on("click", ".category", function () {
         $(this).toggleClass("active");
     });
 
     // Handle upload submission to GitHub
-    uploadSubmit.on("click", async function() {
+    uploadSubmit.on("click", async function () {
         let selectedTags = [];
-        $("#upload-tags .tag.active").each(function() {
+        $(".category.active").each(function () {
             selectedTags.push($(this).text());
         });
         let title = uploadTitle.val().trim();
@@ -116,39 +118,55 @@ $(document).ready(async function() {
             return;
         }
 
-        let fileInput = $("<input>").attr({ type: "file", accept: "image/*,video/*,audio/*" });
-        let file = fileInput.prop("files")[0];
-        if (!file) {
+        if (!selectedFile) {
             alert("No file selected.");
             return;
         }
 
         let reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async function() {
+        reader.readAsDataURL(selectedFile);
+        reader.onload = async function () {
             let base64File = reader.result.split(",")[1];
 
-            let githubApiUrl = "https://api.github.com/repos/ungaul/memerie/contents/memes_folder/" + file.name;
+            let githubApiUrl = "https://api.github.com/repos/ungaul/memerie/contents/tmp/" + selectedFile.name;
 
-            let response = await fetch(githubApiUrl, {
-                method: "PUT",
-                headers: {
-                    "Authorization": "token YOUR_GITHUB_TOKEN",
-                    "Accept": "application/vnd.github.v3+json",
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    message: "Uploading new file: " + file.name,
-                    content: base64File,
-                    branch: "memes"
-                })
-            });
+            console.log("Uploading to:", githubApiUrl);
+            console.log("Branch: main (tmp folder)");
+            console.log("File Name:", selectedFile.name);
+            console.log("Base64 Content (truncated):", base64File.substring(0, 100) + "...");
 
-            let result = await response.json();
-            if (response.ok) {
-                alert("Upload successful!");
-            } else {
-                alert("Upload failed: " + result.message);
+            try {
+                let response = await fetch(githubApiUrl, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": "token YOUR_GITHUB_TOKEN",
+                        "Accept": "application/vnd.github.v3+json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "Uploading file to tmp: " + selectedFile.name,
+                        content: base64File,
+                        branch: "main"
+                    })
+                });
+
+                let result = await response.json();
+                console.log("GitHub Response:", result);
+
+                if (response.ok) {
+                    alert("Upload successful! File will be processed.");
+
+                    // Show notification for 5 seconds
+                    notification.addClass("active");
+                    setTimeout(() => {
+                        notification.removeClass("active");
+                    }, 5000);
+                } else {
+                    alert("Upload failed: " + result.message);
+                }
+            } catch (error) {
+                console.error("Upload error: ", error);
+                alert("Upload failed.");
             }
         };
     });
