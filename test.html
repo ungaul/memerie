@@ -41,7 +41,7 @@
             e.preventDefault();
             const formData = new FormData(this);
             try {
-                const response = await fetch('https://your-project.vercel.app/api/upload', {
+                const response = await fetch('https://memerie.vercel.app/api/upload', {
                     method: 'POST',
                     body: formData
                 });
@@ -59,7 +59,7 @@
 
         document.getElementById('loadMemes').addEventListener('click', async function () {
             try {
-                const response = await fetch('https://your-project.vercel.app/api/list');
+                const response = await fetch('https://memerie.vercel.app/api/list');
                 const result = await response.json();
                 const memeList = document.getElementById('memeList');
                 memeList.innerHTML = '';
