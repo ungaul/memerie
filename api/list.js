@@ -12,6 +12,7 @@ const auth = new google.auth.JWT(
 const drive = google.drive({ version: 'v3', auth });
 
 module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
