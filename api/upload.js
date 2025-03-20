@@ -14,10 +14,19 @@ const drive = google.drive({ version: 'v3', auth });
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
+
   let data;
   try {
     data = req.body;
@@ -25,11 +34,13 @@ module.exports = async (req, res) => {
     res.status(400).json({ error: 'Invalid JSON payload' });
     return;
   }
+
   const { note, categories, fileName, fileContent, mimeType } = data;
   if (!fileName || !fileContent || !mimeType) {
     res.status(400).json({ error: 'Missing required fields' });
     return;
   }
+
   try {
     const buffer = Buffer.from(fileContent, 'base64');
     const stream = new PassThrough();
@@ -46,6 +57,7 @@ module.exports = async (req, res) => {
         body: stream
       }
     });
+
     res.status(200).json({ status: 'success', data: driveResponse.data });
   } catch (error) {
     res.status(500).json({ error: error.message });
