@@ -18,6 +18,7 @@
   "homepage": "https://github.com/ungaul/memerie#readme",
   "description": "",
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "formidable-serverless": "^1.1.1",
+    "googleapis": "^146.0.0"
   }
 }
