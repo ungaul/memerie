@@ -1,53 +1,53 @@
 const { google } = require('googleapis');
-const formidable = require('formidable-serverless');
-const fs = require('fs');
+const { PassThrough } = require('stream');
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
 const auth = new google.auth.JWT(
-    process.env.GOOGLE_CLIENT_EMAIL,
-    null,
-    process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    SCOPES
+  process.env.GOOGLE_CLIENT_EMAIL,
+  null,
+  process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  SCOPES
 );
 const drive = google.drive({ version: 'v3', auth });
 
 module.exports = async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    if (req.method !== 'POST') {
-        res.status(405).json({ error: 'Method not allowed' });
-        return;
-    }
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method !== 'POST') {
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+  let data;
+  try {
+    data = req.body;
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid JSON payload' });
+    return;
+  }
+  const { note, categories, fileName, fileContent, mimeType } = data;
+  if (!fileName || !fileContent || !mimeType) {
+    res.status(400).json({ error: 'Missing required fields' });
+    return;
+  }
+  try {
+    const buffer = Buffer.from(fileContent, 'base64');
+    const stream = new PassThrough();
+    stream.end(buffer);
 
-    const form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-        if (err) {
-            res.status(500).json({ error: 'Error parsing form data' });
-            return;
-        }
-        const note = fields.note || '';
-        const file = files.meme;
-        if (!file) {
-            res.status(400).json({ error: 'No file uploaded' });
-            return;
-        }
-        try {
-            const fileStream = fs.createReadStream(file.path);
-            const driveResponse = await drive.files.create({
-                requestBody: {
-                    name: file.name,
-                    parents: [FOLDER_ID],
-                    description: note
-                },
-                media: {
-                    mimeType: file.type,
-                    body: fileStream
-                }
-            });
-            res.status(200).json({ status: 'success', data: driveResponse.data });
-        } catch (error) {
-            res.status(500).json({ error: error.message });
-        }
+    const driveResponse = await drive.files.create({
+      requestBody: {
+        name: fileName,
+        parents: [FOLDER_ID],
+        description: Array.isArray(categories) ? categories.join(', ') : ''
+      },
+      media: {
+        mimeType,
+        body: stream
+      }
     });
+    res.status(200).json({ status: 'success', data: driveResponse.data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
