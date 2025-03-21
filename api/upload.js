@@ -2,7 +2,7 @@ const { google } = require('googleapis');
 const { PassThrough } = require('stream');
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
-const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID;
+const DEFAULT_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || 'root';
 
 const auth = new google.auth.JWT(
   process.env.GOOGLE_CLIENT_EMAIL,
@@ -14,7 +14,7 @@ const drive = google.drive({ version: 'v3', auth });
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -23,43 +23,42 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ status: 'error', message: 'Method not allowed' });
     return;
   }
 
   let data;
   try {
     data = req.body;
-  } catch (error) {
-    res.status(400).json({ error: 'Invalid JSON payload' });
+  } catch (err) {
+    res.status(400).json({ status: 'error', message: 'Invalid JSON payload' });
     return;
   }
 
-  const { note, categories, fileName, fileContent, mimeType } = data;
+  const { note, fileName, fileContent, mimeType, folderId } = data;
   if (!fileName || !fileContent || !mimeType) {
-    res.status(400).json({ error: 'Missing required fields' });
+    res.status(400).json({ status: 'error', message: 'Missing required fields' });
     return;
   }
+
+  const buffer = Buffer.from(fileContent, 'base64');
+  const stream = new PassThrough();
+  stream.end(buffer);
 
   try {
-    const buffer = Buffer.from(fileContent, 'base64');
-    const stream = new PassThrough();
-    stream.end(buffer);
-
     const driveResponse = await drive.files.create({
       requestBody: {
         name: fileName,
-        parents: [FOLDER_ID],
-        description: Array.isArray(categories) ? categories.join(', ') : ''
+        parents: [ folderId || DEFAULT_FOLDER_ID ],
+        description: note
       },
       media: {
         mimeType,
         body: stream
       }
     });
-
     res.status(200).json({ status: 'success', data: driveResponse.data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ status: 'error', message: error.message });
   }
 };
