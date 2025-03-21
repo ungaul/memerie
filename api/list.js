@@ -25,8 +25,11 @@ module.exports = async (req, res) => {
   try {
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
+      spaces: 'drive',
       fields: 'files(id, name, mimeType, parents, size, modifiedTime, appProperties)',
       pageSize: 100,
+      includeItemsFromAllDrives: true,
+      supportsAllDrives: true
     });
     res.status(200).json({ status: 'success', files: response.data.files });
   } catch (error) {

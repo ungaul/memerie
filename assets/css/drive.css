@@ -63,7 +63,7 @@ body {
 }
 
 .drive-header .drive-col:hover {
-    background: red;
+    background: var(--accent);
     cursor: var(--link-cursor);
 }
 
@@ -81,4 +81,21 @@ body {
 
 .keywords {
     width: 30%;
+}
+
+#upload-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background: var(--accent);
+    border-radius: 100px;
+    padding: 0 20px;
+}
+
+#upload-button ion-icon{
+    font-size: 30px;
 }
