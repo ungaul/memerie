@@ -1,6 +1,25 @@
 const { google } = require('googleapis');
 const { PassThrough } = require('stream');
 
+const rateLimitMap = {};
+
+function canUpload(ip) {
+  const now = Date.now();
+  const ONE_HOUR = 60 * 60 * 1000;
+  const cutoff = now - ONE_HOUR;
+
+  if (!rateLimitMap[ip]) {
+    rateLimitMap[ip] = [];
+  }
+  rateLimitMap[ip] = rateLimitMap[ip].filter(ts => ts > cutoff);
+
+  if (rateLimitMap[ip].length >= 10) {
+    return false;
+  }
+  rateLimitMap[ip].push(now);
+  return true;
+}
+
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 const DEFAULT_FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID || 'root';
 
@@ -23,25 +42,37 @@ module.exports = async (req, res) => {
   }
 
   if (req.method !== 'POST') {
-    res.status(405).json({ status: 'error', message: 'Method not allowed' });
-    return;
+    return res.status(405).json({ status: 'error', message: 'Method not allowed' });
   }
 
   let data;
   try {
     data = req.body;
   } catch (err) {
-    res.status(400).json({ status: 'error', message: 'Invalid JSON payload' });
-    return;
+    return res.status(400).json({ status: 'error', message: 'Invalid JSON payload' });
   }
 
   const { note, fileName, fileContent, mimeType, folderId, path, dimensions } = data;
   if (!fileName || !fileContent || !mimeType) {
-    res.status(400).json({ status: 'error', message: 'Missing required fields' });
-    return;
+    return res.status(400).json({ status: 'error', message: 'Missing required fields' });
+  }
+
+  const ip = (req.headers['x-forwarded-for'] || req.connection.remoteAddress || '').split(',')[0].trim();
+  if (!canUpload(ip)) {
+    return res.status(429).json({
+      status: 'error',
+      message: 'Rate limit: You have exceeded 10 uploads in the last hour.'
+    });
   }
 
   const buffer = Buffer.from(fileContent, 'base64');
+  if (buffer.length > 20 * 1024 * 1024) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'File too large. The limit is 20 MB.'
+    });
+  }
+
   const stream = new PassThrough();
   stream.end(buffer);
 
