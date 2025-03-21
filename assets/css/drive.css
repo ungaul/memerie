@@ -1,0 +1,27 @@
+:root {
+    --accent: #fc0;
+    --first: #0c0c14;
+    --second: #fff;
+    --third: #272727;
+    --fourth: #18191e;
+    --fifth: #0c0c14;
+    --sixth: #808080;
+    --search-height: 60px;
+    --search-width: 500px;
+}
+
+* {
+    font-family: 'Roboto', sans-serif;
+    color: var(--second);
+    box-sizing: border-box;
+    transition: 0.3s;
+}
+
+body {
+    background: var(--fourth);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+}
