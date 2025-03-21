@@ -4,11 +4,11 @@
     {
       "src": "assets/favicon.png",
       "type": "image/png",
-      "sizes": "614x614"
+      "sizes": "2048x2048"
     }
   ],
   "background_color": "#000000",
   "display": "standalone",
   "theme_color": "#000000",
-  "description": "Factorio Map"
+  "description": "Meme Archive"
 }

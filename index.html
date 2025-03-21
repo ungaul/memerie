@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>La memerie</title>
+    <title>Memerie - All your memes</title>
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -26,28 +26,22 @@
         </div>
     </div>
 
-    <div id="upload-container">
-        <div id="upload">
-            <form id="upload-form">
-                <input type="text" id="upload-title" placeholder="Title">
-                <button id="upload-submit">Upload</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- <div id="notification">
+    <div id="notification">
         <ion-icon name="checkmark-outline"></ion-icon>
         <p>The file has been successfully uploaded.</p>
-    </div> -->
+    </div>
 
     <div id="app">
-        <header></header>
+        <header>
+            <input type="text" id="search" autocomplete="off" placeholder="Search...">
+        </header>
         <div id="drive-list">
+            <div id="location"></div>
             <div class="drive-header">
                 <div class="drive-col title">Title</div>
-                <div class="drive-col filesize">Filesize</div>
-                <div class="drive-col lastmodified">Last Modified</div>
                 <div class="drive-col keywords">Keywords</div>
+                <div class="drive-col lastmodified">Last Modified</div>
+                <div class="drive-col filesize">Filesize</div>
             </div>
             <div id="drive-rows"></div>
         </div>

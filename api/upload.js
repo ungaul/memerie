@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const { note, fileName, fileContent, mimeType, folderId } = data;
+  const { note, fileName, fileContent, mimeType, folderId, path, dimensions } = data;
   if (!fileName || !fileContent || !mimeType) {
     res.status(400).json({ status: 'error', message: 'Missing required fields' });
     return;
@@ -50,7 +50,11 @@ module.exports = async (req, res) => {
       requestBody: {
         name: fileName,
         parents: [ folderId || DEFAULT_FOLDER_ID ],
-        description: note
+        description: note,
+        appProperties: {
+          path: path || '',
+          dimensions: dimensions || ''
+        }
       },
       media: {
         mimeType,
