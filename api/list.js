@@ -11,6 +11,20 @@ const auth = new google.auth.JWT(
 );
 const drive = google.drive({ version: 'v3', auth });
 
+async function computePath(file) {
+  if (!file.parents || file.parents.length === 0 || file.parents[0] === DEFAULT_FOLDER_ID || file.parents[0] === 'root') {
+    return "Home";
+  }
+  const parentId = file.parents[0];
+  const parentResponse = await drive.files.get({
+    fileId: parentId,
+    fields: 'id, name, parents'
+  });
+  const parentData = parentResponse.data;
+  const parentPath = await computePath(parentData);
+  return parentPath + " > " + parentData.name;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -30,8 +44,8 @@ module.exports = async (req, res) => {
       fields: 'nextPageToken, files(id, name, mimeType, parents, size, modifiedTime, appProperties, imageMediaMetadata)',
       pageSize: 100,
     });
+    let files = response.data.files;
 
-    const files = response.data.files;
     files.forEach(file => {
       if (file.imageMediaMetadata && file.imageMediaMetadata.width && file.imageMediaMetadata.height) {
         file.dimensions = file.imageMediaMetadata.width + " x " + file.imageMediaMetadata.height;
@@ -39,6 +53,15 @@ module.exports = async (req, res) => {
         file.dimensions = "-";
       }
     });
+
+    files = await Promise.all(files.map(async file => {
+      try {
+        file.path = await computePath(file);
+      } catch (err) {
+        file.path = "-";
+      }
+      return file;
+    }));
 
     res.status(200).json({ status: 'success', files });
   } catch (error) {

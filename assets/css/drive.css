@@ -122,7 +122,7 @@ header {
 }
 
 .title {
-    width: 73%;
+    width: 60%;
 }
 
 .keywords {
@@ -136,6 +136,7 @@ header {
 
 .dimensions {
     width: 12%;
+    display: none;
 }
 
 .path {
@@ -143,7 +144,7 @@ header {
 }
 
 .filesize {
-    width: 15%;
+    width: 10%;
 }
 
 #upload-button {
