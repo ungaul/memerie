@@ -213,11 +213,14 @@ function loadFolder(folderId) {
                         updateLocation();
                     });
                 } else {
-                    row.on("click", function () {
-                        let imageUrl = "https://drive.google.com/thumbnail?id=" + file.id + "&sz=w1000";
-                        let downloadUrl = "https://drive.google.com/uc?export=download&id=" + file.id;
-                        $("#player").html('<img src="' + imageUrl + '" alt="' + file.name + '" data-download="' + downloadUrl + '">');
-                        $("#player-container").addClass("active");
+                    row.click(() => {
+                        let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+                        if (file.mimeType.startsWith("video")) {
+                            window.location.href = downloadUrl;
+                        } else {
+                            $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
+                            $("#player-container").addClass("active");
+                        }
                     });
                 }
                 container.append(row);
@@ -378,7 +381,7 @@ $(document).ready(async function () {
         }
     });
 
-    $(document).on("click", "#player img", function (e) {
+    $(document).on("click", "#player *", function (e) {
         e.stopPropagation();
         let downloadUrl = $(this).attr("data-download");
         let a = document.createElement("a");
@@ -404,11 +407,11 @@ $(document).ready(async function () {
               <input type="text" class="pending-input" value="${fullName}" data-extension="${extension}" autofocus>
               <ion-icon name="checkmark-outline" class="pending-check"></ion-icon>
             </div>
-            <div class="drive-col lastmodified">-</div>
-            <div class="drive-col keywords">-</div>
-            <div class="drive-col filesize">${formatBytes(file.size)}</div>
-            <div class="drive-col path">${(folderStack.length > 0 ? folderStack.map(item => item.name).join(" > ") : "Home")}</div>
             <div class="drive-col dimensions">-</div>
+            <div class="drive-col keywords">-</div>
+            <div class="drive-col lastmodified">-</div>
+            <div class="drive-col path">${(folderStack.length > 0 ? folderStack.map(item => item.name).join(" > ") : "Home")}</div>
+            <div class="drive-col filesize">${formatBytes(file.size)}</div>
           </div>
         `);
             pendingRow.data("file", file);
@@ -475,17 +478,13 @@ $(document).ready(async function () {
                         newRow.append('<div class="drive-col filesize">' + formattedSize + '</div>');
                         newRow.append('<div class="drive-col path">' + ((uploadedFile.appProperties && uploadedFile.appProperties.path) || '-') + '</div>');
                         newRow.append('<div class="drive-col dimensions">' + ((uploadedFile.appProperties && uploadedFile.appProperties.dimensions) || '-') + '</div>');
-                        newRow.on("click", function () {
-                            let imageUrl = "https://drive.google.com/thumbnail?id=" + uploadedFile.id + "&sz=w1000";
-                            let downloadUrl = "https://drive.google.com/uc?export=download&id=" + uploadedFile.id;
-                            $("#player").html('<img src="' + imageUrl + '" alt="' + uploadedFile.name + '" data-download="' + downloadUrl + '">');
-                            $("#player-container").addClass("active");
-                        });
+
                         let container = $('#drive-rows');
                         let inserted = false;
                         let fileRows = container.find('.drive-row').filter(function () {
                             return !$(this).hasClass('pending') && !$(this).hasClass('back') && !$(this).hasClass('folder');
                         });
+
                         if (fileRows.length > 0) {
                             fileRows.each(function () {
                                 let existingName = $(this).find('.drive-col.title').text().trim();
@@ -506,8 +505,10 @@ $(document).ready(async function () {
                                 container.append(newRow);
                             }
                         }
+
                         pendingRow.remove();
                         $("#notification").html('<ion-icon name="checkmark-outline"></ion-icon><p>Upload successful.</p>').addClass("active");
+                        loadFolder(currentFolderId);
                         setTimeout(() => {
                             $("#notification").removeClass("active");
                         }, 2000);
@@ -546,6 +547,9 @@ $(document).ready(async function () {
         if (query === "") {
             loadFolder(currentFolderId);
         }
+    });
+    $("#reload").on("click", function (e) {
+        loadFolder(currentFolderId);
     });
 
     function performSearch(query) {
