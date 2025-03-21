@@ -125,17 +125,25 @@ header {
     width: 73%;
 }
 
-.filesize {
-    width: 12%;
+.keywords {
+    width: 30%;
+    display: none;
 }
 
 .lastmodified {
     width: 15%;
 }
 
-.keywords {
-    width: 30%;
-    display: none;
+.dimensions {
+    width: 12%;
+}
+
+.path {
+    width: 12%;
+}
+
+.filesize {
+    width: 15%;
 }
 
 #upload-button {

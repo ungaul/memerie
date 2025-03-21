@@ -27,10 +27,20 @@ module.exports = async (req, res) => {
       q: `'${folderId}' in parents and trashed = false`,
       corpora: 'user',
       orderBy: 'folder,name',
-      fields: 'nextPageToken, files(id, name, mimeType, parents, size, modifiedTime, appProperties)',
+      fields: 'nextPageToken, files(id, name, mimeType, parents, size, modifiedTime, appProperties, imageMediaMetadata)',
       pageSize: 100,
     });
-    res.status(200).json({ status: 'success', files: response.data.files });
+
+    const files = response.data.files;
+    files.forEach(file => {
+      if (file.imageMediaMetadata && file.imageMediaMetadata.width && file.imageMediaMetadata.height) {
+        file.dimensions = file.imageMediaMetadata.width + " x " + file.imageMediaMetadata.height;
+      } else {
+        file.dimensions = "-";
+      }
+    });
+
+    res.status(200).json({ status: 'success', files });
   } catch (error) {
     res.status(500).json({ status: 'error', message: error.message });
   }
