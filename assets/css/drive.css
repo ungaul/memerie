@@ -1,5 +1,6 @@
 :root {
     --accent: #fc0;
+    --accent-hover: #e6ba0d;
     --first: #0c0c14;
     --second: #fff;
     --third: #272727;
@@ -94,8 +95,18 @@ body {
     background: var(--accent);
     border-radius: 100px;
     padding: 0 20px;
+    cursor: var(--link-cursor);
+    border: 1px solid var(--accent-hover);
 }
 
-#upload-button ion-icon{
+#upload-button * {
+    cursor: var(--link-cursor);
+}
+
+#upload-button ion-icon {
     font-size: 30px;
+}
+
+#upload-button:hover {
+    background: var(--accent-hover);
 }
