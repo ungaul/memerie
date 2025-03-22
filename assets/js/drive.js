@@ -244,16 +244,62 @@ function performSearch(query) {
         loadFolder(currentFolderId);
         return;
     }
-    $("#drive-rows .drive-row").each(function () {
-        if ($(this).hasClass("back") || $(this).hasClass("pending")) {
-            $(this).show();
-            return;
-        }
-        let rowText = $(this).text().toLowerCase();
-        if (rowText.indexOf(query) !== -1) {
-            $(this).show();
+
+    let searchUrl = `${BACKEND_URL}/api/search?q=${encodeURIComponent(query)}`;
+    $.getJSON(searchUrl, function (response) {
+        if (response.status === "success") {
+            let files = response.files;
+            let container = $("#drive-rows");
+            container.empty();
+
+            if (files.length === 0) {
+                container.append('<div class="drive-row no-results">No results found.</div>');
+                return;
+            }
+
+            files.forEach(file => {
+                let row = $('<div class="drive-row"></div>');
+                let icon = file.mimeType === "application/vnd.google-apps.folder"
+                    ? '<ion-icon name="folder-outline"></ion-icon> '
+                    : '<ion-icon name="document-outline"></ion-icon> ';
+
+                let formattedDate = file.modifiedTime
+                    ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false })
+                    : '-';
+                let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
+                let filePath = (file.appProperties && file.appProperties.path) || '-';
+                let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
+
+                row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
+                row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
+                row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
+                row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
+                row.append('<div class="drive-col path">' + filePath + '</div>');
+                row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
+
+                if (file.mimeType === "application/vnd.google-apps.folder") {
+                    row.addClass("folder");
+                    row.on("click", function () {
+                        navigateDotPath(filePath.replace(/ > /g, "."));
+                    });
+                } else {
+                    row.on("click", function () {
+                        let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+                        if (file.mimeType.startsWith("video")) {
+                            window.location.href = downloadUrl;
+                        } else {
+                            $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
+                            $("#player-container").addClass("active");
+                        }
+                    });
+                }
+
+                container.append(row);
+            });
+
+            updateLocation();
         } else {
-            $(this).hide();
+            console.error("API error:", response.message);
         }
     });
 }

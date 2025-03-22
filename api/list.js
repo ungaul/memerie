@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
       corpora: 'user',
       orderBy: 'folder,name',
       fields: 'nextPageToken, files(id, name, mimeType, parents, size, modifiedTime, appProperties, imageMediaMetadata)',
-      pageSize: 100,
+      pageSize: 1000,
     });
     let files = response.data.files;
 
