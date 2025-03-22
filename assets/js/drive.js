@@ -373,6 +373,7 @@ $(document).ready(async function () {
 
     let urlQuery = getURLParam("q");
     $("#searchbar").val(urlQuery || "");
+    if (urlQuery) performSearch(urlQuery);
 
     loadFolder(currentFolderId);
 
@@ -597,20 +598,4 @@ $(document).ready(async function () {
     $("#reload").on("click", function (e) {
         loadFolder(currentFolderId);
     });
-
-    function performSearch(query) {
-        query = query.toLowerCase();
-        $('#drive-rows .drive-row').each(function () {
-            if ($(this).hasClass('back') || $(this).hasClass('pending')) {
-                $(this).show();
-                return;
-            }
-            let rowText = $(this).text().toLowerCase();
-            if (rowText.indexOf(query) !== -1) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
-        });
-    }
 });
