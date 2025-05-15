@@ -32,23 +32,12 @@ const auth = new google.auth.JWT(
 const drive = google.drive({ version: 'v3', auth });
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
   if (req.method !== 'POST') {
     return res.status(405).json({ status: 'error', message: 'Method not allowed' });
   }
 
-  let data;
-  try {
-    data = req.body;
-  } catch (err) {
+  const data = req.body;
+  if (!data) {
     return res.status(400).json({ status: 'error', message: 'Invalid JSON payload' });
   }
 
@@ -80,7 +69,7 @@ module.exports = async (req, res) => {
     const driveResponse = await drive.files.create({
       requestBody: {
         name: fileName,
-        parents: [ folderId || DEFAULT_FOLDER_ID ],
+        parents: [folderId || DEFAULT_FOLDER_ID],
         description: note,
         appProperties: {
           path: path || '',

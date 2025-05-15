@@ -49,15 +49,14 @@ async function computePath(file) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ status: 'error', message: 'Method not allowed' });
+  if (req.method !== 'GET') {
+    return res.status(405).json({ status: 'error', message: 'Method not allowed' });
+  }
 
   const query = (req.query.q || '').toLowerCase();
-  if (!query) return res.status(400).json({ status: 'error', message: 'Missing search query' });
+  if (!query) {
+    return res.status(400).json({ status: 'error', message: 'Missing search query' });
+  }
 
   try {
     const allFiles = await getAllFilesRecursively(DEFAULT_FOLDER_ID);

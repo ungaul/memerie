@@ -26,16 +26,8 @@ async function computePath(file) {
 }
 
 module.exports = async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
   const folderId = req.query.folderId || DEFAULT_FOLDER_ID;
+
   try {
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
@@ -44,11 +36,12 @@ module.exports = async (req, res) => {
       fields: 'nextPageToken, files(id, name, mimeType, parents, size, modifiedTime, appProperties, imageMediaMetadata)',
       pageSize: 1000,
     });
+
     let files = response.data.files;
 
     files.forEach(file => {
-      if (file.imageMediaMetadata && file.imageMediaMetadata.width && file.imageMediaMetadata.height) {
-        file.dimensions = file.imageMediaMetadata.width + " x " + file.imageMediaMetadata.height;
+      if (file.imageMediaMetadata?.width && file.imageMediaMetadata?.height) {
+        file.dimensions = `${file.imageMediaMetadata.width} x ${file.imageMediaMetadata.height}`;
       } else {
         file.dimensions = "-";
       }
@@ -57,7 +50,7 @@ module.exports = async (req, res) => {
     files = await Promise.all(files.map(async file => {
       try {
         file.path = await computePath(file);
-      } catch (err) {
+      } catch {
         file.path = "-";
       }
       return file;
