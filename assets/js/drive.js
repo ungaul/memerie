@@ -10,7 +10,7 @@ function formatBytes(bytes, decimals = 2) {
 var currentFolderId = '';
 var currentFolderName = "Home";
 var folderStack = [];
-const BACKEND_URL = "https://memerie.vercel.app";
+const BACKEND_URL = "https://memerie.onrender.com/";
 
 var currentSortColumn = "title";
 var currentSortDirection = 1;
@@ -94,7 +94,7 @@ async function getFolderIdFromDotPath(dotPath) {
 }
 
 async function findSubfolderByName(parentId, folderName) {
-    let listUrl = BACKEND_URL + "/api/list";
+    let listUrl = BACKEND_URL + "/list";
     if (parentId) {
         listUrl += "?folderId=" + parentId;
     }
@@ -106,7 +106,7 @@ async function findSubfolderByName(parentId, folderName) {
 }
 
 function loadFolder(folderId) {
-    let listUrl = BACKEND_URL + "/api/list";
+    let listUrl = BACKEND_URL + "/list";
     if (folderId) {
         listUrl += "?folderId=" + folderId;
     }
@@ -245,7 +245,7 @@ function performSearch(query) {
         return;
     }
 
-    let searchUrl = `${BACKEND_URL}/api/search?q=${encodeURIComponent(query)}`;
+    let searchUrl = `${BACKEND_URL}/search?q=${encodeURIComponent(query)}`;
     $.getJSON(searchUrl, function (response) {
         if (response.status === "success") {
             let files = response.files;
@@ -324,7 +324,7 @@ async function getFolderIdFromDotPath(dotPath) {
 }
 
 async function findSubfolderByName(parentId, folderName) {
-    let listUrl = BACKEND_URL + "/api/list";
+    let listUrl = BACKEND_URL + "/list";
     if (parentId) {
         listUrl += "?folderId=" + parentId;
     }
@@ -506,7 +506,7 @@ $(document).ready(async function () {
                 dimensions: "-"
             };
             $.ajax({
-                url: BACKEND_URL + '/api/upload',
+                url: BACKEND_URL + '/upload',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify(payload),
