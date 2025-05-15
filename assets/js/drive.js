@@ -10,7 +10,7 @@ function formatBytes(bytes, decimals = 2) {
 var currentFolderId = '';
 var currentFolderName = "Home";
 var folderStack = [];
-const BACKEND_URL = "https://memerie.onrender.com/";
+const BACKEND_URL = "https://memerie.onrender.com";
 
 var currentSortColumn = "title";
 var currentSortDirection = 1;
