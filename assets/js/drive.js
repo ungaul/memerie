@@ -106,6 +106,9 @@ async function findSubfolderByName(parentId, folderName) {
 }
 
 function loadFolder(folderId) {
+    let container = $("#drive-rows");
+    container.empty();
+
     let listUrl = BACKEND_URL + "/list";
     if (folderId) {
         listUrl += "?folderId=" + folderId;
@@ -156,9 +159,6 @@ function loadFolder(folderId) {
                 }
                 return currentSortDirection * valueA.localeCompare(valueB);
             });
-
-            let container = $("#drive-rows");
-            container.empty();
 
             if (folderStack.length > 0) {
                 let backRow = $(`
@@ -245,6 +245,9 @@ function performSearch(query) {
         return;
     }
 
+    let container = $("#drive-rows");
+    container.empty();
+
     let searchUrl = `${BACKEND_URL}/search?q=${encodeURIComponent(query)}`;
     $.getJSON(searchUrl, function (response) {
         if (response.status === "success") {
@@ -302,37 +305,6 @@ function performSearch(query) {
             console.error("API error:", response.message);
         }
     });
-}
-
-async function getFolderIdFromDotPath(dotPath) {
-    let segments = dotPath ? dotPath.split(".") : [];
-    let parentId = "";
-    let parentName = "Home";
-    folderStack = [];
-    for (let i = 0; i < segments.length; i++) {
-        let segment = segments[i].trim();
-        if (!segment) break;
-        let subfolder = await findSubfolderByName(parentId, segment);
-        if (!subfolder) break;
-        if (parentName !== "Home" || parentId) {
-            folderStack.push({ id: parentId, name: parentName, dotPath: segments.slice(0, i).join(".") });
-        }
-        parentId = subfolder.id;
-        parentName = subfolder.name;
-    }
-    return { id: parentId, name: parentName };
-}
-
-async function findSubfolderByName(parentId, folderName) {
-    let listUrl = BACKEND_URL + "/list";
-    if (parentId) {
-        listUrl += "?folderId=" + parentId;
-    }
-    const response = await fetch(listUrl);
-    const data = await response.json();
-    if (data.status !== "success") return null;
-    let children = data.files || [];
-    return children.find(f => f.mimeType === "application/vnd.google-apps.folder" && f.name === folderName) || null;
 }
 
 function checkUploadAllowed(file) {
