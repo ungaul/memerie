@@ -65,7 +65,7 @@ async function navigateDotPath(dotPath) {
     currentFolderId = result.id;
     currentFolderName = result.name || "Home";
     updateURLParam("folder", dotPath);
-    loadFolder(currentFolderId);
+    await loadFolder(currentFolderId);
     updateLocation();
 }
 
@@ -106,15 +106,22 @@ async function findSubfolderByName(parentId, folderName) {
 }
 
 function loadFolder(folderId) {
-    let container = $("#drive-rows");
-    container.empty();
+    return new Promise((resolve, reject) => {
+        let container = $("#drive-rows");
+        container.empty();
 
-    let listUrl = BACKEND_URL + "/list";
-    if (folderId) {
-        listUrl += "?folderId=" + folderId;
-    }
-    $.getJSON(listUrl, (response) => {
-        if (response.status === "success") {
+        let listUrl = BACKEND_URL + "/list";
+        if (folderId) {
+            listUrl += "?folderId=" + folderId;
+        }
+
+        $.getJSON(listUrl, (response) => {
+            if (response.status !== "success") {
+                console.error("API error:", response.message);
+                reject(response.message);
+                return;
+            }
+
             let files = response.files;
             files.sort(function (a, b) {
                 let isFolderA = (a.mimeType === "application/vnd.google-apps.folder");
@@ -162,22 +169,22 @@ function loadFolder(folderId) {
 
             if (folderStack.length > 0) {
                 let backRow = $(`
-            <div class="drive-row back">
-              <div class="drive-col title"><ion-icon name="return-up-back-outline"></ion-icon></div>
-              <div class="drive-col keywords"></div>
-              <div class="drive-col lastmodified"></div>
-              <div class="drive-col dimensions"></div>
-              <div class="drive-col path"></div>
-              <div class="drive-col filesize"></div>
-            </div>
-          `);
-                backRow.on("click", function () {
+                    <div class="drive-row back">
+                      <div class="drive-col title"><ion-icon name="return-up-back-outline"></ion-icon></div>
+                      <div class="drive-col keywords"></div>
+                      <div class="drive-col lastmodified"></div>
+                      <div class="drive-col dimensions"></div>
+                      <div class="drive-col path"></div>
+                      <div class="drive-col filesize"></div>
+                    </div>
+                `);
+                backRow.on("click", async function () {
                     let last = folderStack.pop();
                     currentFolderId = last.id;
                     currentFolderName = last.name;
                     let newDotPath = dotPathFromStackAndCurrent();
                     updateURLParam("folder", newDotPath);
-                    loadFolder(currentFolderId);
+                    await loadFolder(currentFolderId);
                     updateLocation();
                 });
                 container.append(backRow);
@@ -209,7 +216,7 @@ function loadFolder(folderId) {
                         currentFolderName = file.name;
                         let newDotPath = dotPathFromStackAndCurrent();
                         updateURLParam("folder", newDotPath);
-                        loadFolder(currentFolderId);
+                        await loadFolder(currentFolderId);
                         updateLocation();
                     });
                 } else {
@@ -229,81 +236,89 @@ function loadFolder(folderId) {
             updateLocation();
 
             let q = getURLParam("q");
-            if (q) {
-                performSearch(q);
-            }
-        } else {
-            console.error("API error:", response.message);
-        }
+            if (q) performSearch(q);
+
+            resolve();
+        }).fail((xhr, status, error) => {
+            console.error("AJAX error:", error);
+            reject(error);
+        });
     });
 }
 
 function performSearch(query) {
-    query = query.toLowerCase().trim();
-    if (!query) {
-        loadFolder(currentFolderId);
-        return;
-    }
+    return new Promise((resolve, reject) => {
+        query = query.toLowerCase().trim();
+        if (!query) {
+            loadFolder(currentFolderId).then(resolve).catch(reject);
+            return;
+        }
 
-    let container = $("#drive-rows");
-    container.empty();
+        let container = $("#drive-rows");
+        container.empty();
 
-    let searchUrl = `${BACKEND_URL}/search?q=${encodeURIComponent(query)}`;
-    $.getJSON(searchUrl, function (response) {
-        if (response.status === "success") {
-            let files = response.files;
-            let container = $("#drive-rows");
-            container.empty();
+        let searchUrl = `${BACKEND_URL}/search?q=${encodeURIComponent(query)}`;
+        $.getJSON(searchUrl, function (response) {
+            if (response.status === "success") {
+                let files = response.files;
+                container.empty();
 
-            if (files.length === 0) {
-                container.append('<div class="drive-row no-results">No results found.</div>');
-                return;
-            }
-
-            files.forEach(file => {
-                let row = $('<div class="drive-row"></div>');
-                let icon = file.mimeType === "application/vnd.google-apps.folder"
-                    ? '<ion-icon name="folder-outline"></ion-icon> '
-                    : '<ion-icon name="document-outline"></ion-icon> ';
-
-                let formattedDate = file.modifiedTime
-                    ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false })
-                    : '-';
-                let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
-                let filePath = (file.appProperties && file.appProperties.path) || '-';
-                let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
-
-                row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
-                row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
-                row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
-                row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
-                row.append('<div class="drive-col path">' + filePath + '</div>');
-                row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
-
-                if (file.mimeType === "application/vnd.google-apps.folder") {
-                    row.addClass("folder");
-                    row.on("click", function () {
-                        navigateDotPath(filePath.replace(/ > /g, "."));
-                    });
-                } else {
-                    row.on("click", function () {
-                        let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-                        if (file.mimeType.startsWith("video")) {
-                            window.location.href = downloadUrl;
-                        } else {
-                            $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
-                            $("#player-container").addClass("active");
-                        }
-                    });
+                if (files.length === 0) {
+                    container.append('<div class="drive-row no-results">No results found.</div>');
+                    resolve();
+                    return;
                 }
 
-                container.append(row);
-            });
+                files.forEach(file => {
+                    let row = $('<div class="drive-row"></div>');
+                    let icon = file.mimeType === "application/vnd.google-apps.folder"
+                        ? '<ion-icon name="folder-outline"></ion-icon> '
+                        : '<ion-icon name="document-outline"></ion-icon> ';
 
-            updateLocation();
-        } else {
-            console.error("API error:", response.message);
-        }
+                    let formattedDate = file.modifiedTime
+                        ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false })
+                        : '-';
+                    let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
+                    let filePath = (file.appProperties && file.appProperties.path) || '-';
+                    let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
+
+                    row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
+                    row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
+                    row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
+                    row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
+                    row.append('<div class="drive-col path">' + filePath + '</div>');
+                    row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
+
+                    if (file.mimeType === "application/vnd.google-apps.folder") {
+                        row.addClass("folder");
+                        row.on("click", async function () {
+                            await navigateDotPath(filePath.replace(/ > /g, "."));
+                        });
+                    } else {
+                        row.on("click", function () {
+                            let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+                            if (file.mimeType.startsWith("video")) {
+                                window.location.href = downloadUrl;
+                            } else {
+                                $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
+                                $("#player-container").addClass("active");
+                            }
+                        });
+                    }
+
+                    container.append(row);
+                });
+
+                updateLocation();
+                resolve();
+            } else {
+                console.error("API error:", response.message);
+                reject(response.message);
+            }
+        }).fail((xhr, status, error) => {
+            console.error("AJAX error:", error);
+            reject(error);
+        });
     });
 }
 
@@ -345,11 +360,11 @@ $(document).ready(async function () {
 
     let urlQuery = getURLParam("q");
     $("#searchbar").val(urlQuery || "");
-    if (urlQuery) performSearch(urlQuery);
+    if (urlQuery) await performSearch(urlQuery);
 
-    loadFolder(currentFolderId);
+    await loadFolder(currentFolderId);
 
-    $(".drive-header .drive-col").on("click", function () {
+    $(".drive-header .drive-col").on("click", async function () {
         let sortKey = $(this).attr("class").split(" ")[1];
         if (currentSortColumn === sortKey) {
             currentSortDirection = -currentSortDirection;
@@ -365,32 +380,31 @@ $(document).ready(async function () {
         }
         updateURLParam("sort", currentSortColumn);
         updateURLParam("direction", currentSortDirection === 1 ? "asc" : "desc");
-        loadFolder(currentFolderId);
+        await loadFolder(currentFolderId);
     });
 
-    $("#searchbar").on("keydown", function (e) {
+    $("#searchbar").on("keydown", async function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
             let query = $(this).val();
             updateURLParam("q", query);
-            performSearch(query);
+            await performSearch(query);
         }
     });
-    $("#searchbar").on("blur", function () {
+    $("#searchbar").on("blur", async function () {
         let query = $(this).val().trim();
         if (query !== "") {
             updateURLParam("q", query);
-            performSearch(query);
+            await performSearch(query);
         } else {
             updateURLParam("q", "");
-            loadFolder(currentFolderId);
+            await loadFolder(currentFolderId);
         }
     });
-    $("#searchbar").on("keyup", function (e) {
+    $("#searchbar").on("keyup", async function (e) {
         let query = $(this).val().trim();
         if (query === "") {
-            updateURLParam("q", "");
-            loadFolder(currentFolderId);
+            await loadFolder(currentFolderId);
         }
     });
 
@@ -547,27 +561,27 @@ $(document).ready(async function () {
         reader.readAsDataURL(file);
     });
 
-    $("#search").on("keydown", function (e) {
+    $("#search").on("keydown", async function (e) {
         if (e.key === "Enter") {
             e.preventDefault();
-            performSearch($(this).val());
+            await performSearch($(this).val());
         }
     });
-    $("#search").on("blur", function () {
+    $("#search").on("blur", async function () {
         let query = $(this).val().trim();
         if (query !== "") {
-            performSearch(query);
+            await performSearch(query);
         } else {
-            loadFolder(currentFolderId);
+            await loadFolder(currentFolderId);
         }
     });
-    $("#search").on("keyup", function (e) {
+    $("#search").on("keyup", async function (e) {
         let query = $(this).val().trim();
         if (query === "") {
-            loadFolder(currentFolderId);
+            await loadFolder(currentFolderId);
         }
     });
-    $("#reload").on("click", function (e) {
-        loadFolder(currentFolderId);
+    $("#reload").on("click", async function (e) {
+        await loadFolder(currentFolderId);
     });
 });
