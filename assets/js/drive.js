@@ -7,6 +7,8 @@ function formatBytes(bytes, decimals = 2) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+const folderCache = new Map();
+const searchCache = new Map();
 var currentFolderId = '';
 var currentFolderName = "Home";
 var folderStack = [];
@@ -94,6 +96,11 @@ async function getFolderIdFromDotPath(dotPath) {
 }
 
 async function findSubfolderByName(parentId, folderName) {
+    const cacheKey = `${parentId}:${folderName}`;
+    if (folderCache.has(cacheKey)) {
+        return folderCache.get(cacheKey);
+    }
+
     let listUrl = BACKEND_URL + "/list";
     if (parentId) {
         listUrl += "?folderId=" + parentId;
@@ -102,11 +109,21 @@ async function findSubfolderByName(parentId, folderName) {
     const data = await response.json();
     if (data.status !== "success") return null;
     let children = data.files || [];
-    return children.find(f => f.mimeType === "application/vnd.google-apps.folder" && f.name === folderName) || null;
+    const result = children.find(f => f.mimeType === "application/vnd.google-apps.folder" && f.name === folderName) || null;
+    folderCache.set(cacheKey, result);
+    return result;
 }
 
 function loadFolder(folderId) {
     return new Promise((resolve, reject) => {
+        const cacheKey = `folder:${folderId}`;
+        if (folderCache.has(cacheKey)) {
+            const cachedData = folderCache.get(cacheKey);
+            renderFolderContents(cachedData);
+            resolve();
+            return;
+        }
+
         let container = $("#drive-rows");
         container.empty();
 
@@ -122,128 +139,134 @@ function loadFolder(folderId) {
                 return;
             }
 
-            let files = response.files;
-            files.sort(function (a, b) {
-                let isFolderA = (a.mimeType === "application/vnd.google-apps.folder");
-                let isFolderB = (b.mimeType === "application/vnd.google-apps.folder");
-                if (isFolderA && !isFolderB) return -1;
-                if (!isFolderA && isFolderB) return 1;
-                let valueA, valueB;
-                switch (currentSortColumn) {
-                    case "title":
-                        valueA = a.name || "";
-                        valueB = b.name || "";
-                        break;
-                    case "keywords":
-                        valueA = (a.appProperties && a.appProperties.keywords) || "";
-                        valueB = (b.appProperties && b.appProperties.keywords) || "";
-                        break;
-                    case "lastmodified":
-                        valueA = a.modifiedTime || "";
-                        valueB = b.modifiedTime || "";
-                        break;
-                    case "dimensions":
-                        valueA = (a.appProperties && a.appProperties.dimensions) || "";
-                        valueB = (b.appProperties && b.appProperties.dimensions) || "";
-                        break;
-                    case "path":
-                        valueA = (a.appProperties && a.appProperties.path) || "";
-                        valueB = (b.appProperties && b.appProperties.path) || "";
-                        break;
-                    case "filesize":
-                        valueA = a.size ? parseInt(a.size, 10) : 0;
-                        valueB = b.size ? parseInt(b.size, 10) : 0;
-                        break;
-                    default:
-                        valueA = a.name || "";
-                        valueB = b.name || "";
-                }
-                if (currentSortColumn === "lastmodified") {
-                    return currentSortDirection * (new Date(valueA) - new Date(valueB));
-                }
-                if (currentSortColumn === "filesize") {
-                    return currentSortDirection * (valueA - valueB);
-                }
-                return currentSortDirection * valueA.localeCompare(valueB);
-            });
-
-            if (folderStack.length > 0) {
-                let backRow = $(`
-                    <div class="drive-row back">
-                      <div class="drive-col title"><ion-icon name="return-up-back-outline"></ion-icon></div>
-                      <div class="drive-col keywords"></div>
-                      <div class="drive-col lastmodified"></div>
-                      <div class="drive-col dimensions"></div>
-                      <div class="drive-col path"></div>
-                      <div class="drive-col filesize"></div>
-                    </div>
-                `);
-                backRow.on("click", async function () {
-                    let last = folderStack.pop();
-                    currentFolderId = last.id;
-                    currentFolderName = last.name;
-                    let newDotPath = dotPathFromStackAndCurrent();
-                    updateURLParam("folder", newDotPath);
-                    await loadFolder(currentFolderId);
-                    updateLocation();
-                });
-                container.append(backRow);
-            }
-
-            files.forEach((file) => {
-                let row = $('<div class="drive-row"></div>');
-                let icon = (file.mimeType === "application/vnd.google-apps.folder")
-                    ? '<ion-icon name="folder-outline"></ion-icon> '
-                    : '<ion-icon name="document-outline"></ion-icon> ';
-                let formattedDate = file.modifiedTime ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false }) : '-';
-                let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
-                let filePath = (file.appProperties && file.appProperties.path) || '-';
-                let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
-                row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
-                row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
-                row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
-                row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
-                row.append('<div class="drive-col path">' + filePath + '</div>');
-                row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
-
-                if (file.mimeType === "application/vnd.google-apps.folder") {
-                    row.addClass("folder");
-                    row.on("click", async function () {
-                        if (currentFolderName !== "Home" || currentFolderId) {
-                            folderStack.push({ id: currentFolderId, name: currentFolderName, dotPath: dotPathFromStackAndCurrent() });
-                        }
-                        currentFolderId = file.id;
-                        currentFolderName = file.name;
-                        let newDotPath = dotPathFromStackAndCurrent();
-                        updateURLParam("folder", newDotPath);
-                        await loadFolder(currentFolderId);
-                        updateLocation();
-                    });
-                } else {
-                    row.click(() => {
-                        let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-                        if (file.mimeType.startsWith("video")) {
-                            window.location.href = downloadUrl;
-                        } else {
-                            $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
-                            $("#player-container").addClass("active");
-                        }
-                    });
-                }
-                container.append(row);
-            });
-
-            updateLocation();
-
-            let q = getURLParam("q");
-            if (q) performSearch(q);
-
+            folderCache.set(cacheKey, response);
+            renderFolderContents(response);
             resolve();
         }).fail((xhr, status, error) => {
             console.error("AJAX error:", error);
             reject(error);
         });
     });
+}
+
+function renderFolderContents(response) {
+    let container = $("#drive-rows");
+    container.empty();
+    let files = response.files;
+    files.sort(function (a, b) {
+        let isFolderA = (a.mimeType === "application/vnd.google-apps.folder");
+        let isFolderB = (b.mimeType === "application/vnd.google-apps.folder");
+        if (isFolderA && !isFolderB) return -1;
+        if (!isFolderA && isFolderB) return 1;
+        let valueA, valueB;
+        switch (currentSortColumn) {
+            case "title":
+                valueA = a.name || "";
+                valueB = b.name || "";
+                break;
+            case "keywords":
+                valueA = (a.appProperties && a.appProperties.keywords) || "";
+                valueB = (b.appProperties && b.appProperties.keywords) || "";
+                break;
+            case "lastmodified":
+                valueA = a.modifiedTime || "";
+                valueB = b.modifiedTime || "";
+                break;
+            case "dimensions":
+                valueA = (a.appProperties && a.appProperties.dimensions) || "";
+                valueB = (b.appProperties && b.appProperties.dimensions) || "";
+                break;
+            case "path":
+                valueA = (a.appProperties && a.appProperties.path) || "";
+                valueB = (b.appProperties && b.appProperties.path) || "";
+                break;
+            case "filesize":
+                valueA = a.size ? parseInt(a.size, 10) : 0;
+                valueB = b.size ? parseInt(b.size, 10) : 0;
+                break;
+            default:
+                valueA = a.name || "";
+                valueB = b.name || "";
+        }
+        if (currentSortColumn === "lastmodified") {
+            return currentSortDirection * (new Date(valueA) - new Date(valueB));
+        }
+        if (currentSortColumn === "filesize") {
+            return currentSortDirection * (valueA - valueB);
+        }
+        return currentSortDirection * valueA.localeCompare(valueB);
+    });
+
+    if (folderStack.length > 0) {
+        let backRow = $(`
+            <div class="drive-row back">
+              <div class="drive-col title"><ion-icon name="return-up-back-outline"></ion-icon></div>
+              <div class="drive-col keywords"></div>
+              <div class="drive-col lastmodified"></div>
+              <div class="drive-col dimensions"></div>
+              <div class="drive-col path"></div>
+              <div class="drive-col filesize"></div>
+            </div>
+        `);
+        backRow.on("click", async function () {
+            let last = folderStack.pop();
+            currentFolderId = last.id;
+            currentFolderName = last.name;
+            let newDotPath = dotPathFromStackAndCurrent();
+            updateURLParam("folder", newDotPath);
+            await loadFolder(currentFolderId);
+            updateLocation();
+        });
+        container.append(backRow);
+    }
+
+    files.forEach((file) => {
+        let row = $('<div class="drive-row"></div>');
+        let icon = (file.mimeType === "application/vnd.google-apps.folder")
+            ? '<ion-icon name="folder-outline"></ion-icon> '
+            : '<ion-icon name="document-outline"></ion-icon> ';
+        let formattedDate = file.modifiedTime ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false }) : '-';
+        let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
+        let filePath = (file.appProperties && file.appProperties.path) || '-';
+        let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
+        row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
+        row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
+        row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
+        row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
+        row.append('<div class="drive-col path">' + filePath + '</div>');
+        row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
+
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+            row.addClass("folder");
+            row.on("click", async function () {
+                if (currentFolderName !== "Home" || currentFolderId) {
+                    folderStack.push({ id: currentFolderId, name: currentFolderName, dotPath: dotPathFromStackAndCurrent() });
+                }
+                currentFolderId = file.id;
+                currentFolderName = file.name;
+                let newDotPath = dotPathFromStackAndCurrent();
+                updateURLParam("folder", newDotPath);
+                await loadFolder(currentFolderId);
+                updateLocation();
+            });
+        } else {
+            row.click(() => {
+                let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+                if (file.mimeType.startsWith("video")) {
+                    window.location.href = downloadUrl;
+                } else {
+                    $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
+                    $("#player-container").addClass("active");
+                }
+            });
+        }
+        container.append(row);
+    });
+
+    updateLocation();
+
+    let q = getURLParam("q");
+    if (q) performSearch(q);
 }
 
 function performSearch(query) {
@@ -254,62 +277,22 @@ function performSearch(query) {
             return;
         }
 
+        const cacheKey = `search:${query}`;
+        if (searchCache.has(cacheKey)) {
+            const cachedData = searchCache.get(cacheKey);
+            renderSearchResults(cachedData);
+            resolve();
+            return;
+        }
+
         let container = $("#drive-rows");
         container.empty();
 
         let searchUrl = `${BACKEND_URL}/search?q=${encodeURIComponent(query)}`;
         $.getJSON(searchUrl, function (response) {
             if (response.status === "success") {
-                let files = response.files;
-                container.empty();
-
-                if (files.length === 0) {
-                    container.append('<div class="drive-row no-results">No results found.</div>');
-                    resolve();
-                    return;
-                }
-
-                files.forEach(file => {
-                    let row = $('<div class="drive-row"></div>');
-                    let icon = file.mimeType === "application/vnd.google-apps.folder"
-                        ? '<ion-icon name="folder-outline"></ion-icon> '
-                        : '<ion-icon name="document-outline"></ion-icon> ';
-
-                    let formattedDate = file.modifiedTime
-                        ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false })
-                        : '-';
-                    let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
-                    let filePath = (file.appProperties && file.appProperties.path) || '-';
-                    let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
-
-                    row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
-                    row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
-                    row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
-                    row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
-                    row.append('<div class="drive-col path">' + filePath + '</div>');
-                    row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
-
-                    if (file.mimeType === "application/vnd.google-apps.folder") {
-                        row.addClass("folder");
-                        row.on("click", async function () {
-                            await navigateDotPath(filePath.replace(/ > /g, "."));
-                        });
-                    } else {
-                        row.on("click", function () {
-                            let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
-                            if (file.mimeType.startsWith("video")) {
-                                window.location.href = downloadUrl;
-                            } else {
-                                $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
-                                $("#player-container").addClass("active");
-                            }
-                        });
-                    }
-
-                    container.append(row);
-                });
-
-                updateLocation();
+                searchCache.set(cacheKey, response);
+                renderSearchResults(response);
                 resolve();
             } else {
                 console.error("API error:", response.message);
@@ -320,6 +303,59 @@ function performSearch(query) {
             reject(error);
         });
     });
+}
+
+function renderSearchResults(response) {
+    let container = $("#drive-rows");
+    container.empty();
+    let files = response.files;
+
+    if (files.length === 0) {
+        container.append('<div class="drive-row no-results">No results found.</div>');
+        return;
+    }
+
+    files.forEach(file => {
+        let row = $('<div class="drive-row"></div>');
+        let icon = file.mimeType === "application/vnd.google-apps.folder"
+            ? '<ion-icon name="folder-outline"></ion-icon> '
+            : '<ion-icon name="document-outline"></ion-icon> ';
+
+        let formattedDate = file.modifiedTime
+            ? new Date(file.modifiedTime).toLocaleString(undefined, { hour12: false })
+            : '-';
+        let formattedSize = file.size ? formatBytes(parseInt(file.size, 10)) : '-';
+        let filePath = (file.appProperties && file.appProperties.path) || '-';
+        let fileDimensions = (file.appProperties && file.appProperties.dimensions) || '-';
+
+        row.append('<div class="drive-col title">' + icon + (file.name || '') + '</div>');
+        row.append('<div class="drive-col keywords">' + ((file.appProperties && file.appProperties.keywords) || '-') + '</div>');
+        row.append('<div class="drive-col lastmodified">' + formattedDate + '</div>');
+        row.append('<div class="drive-col dimensions">' + fileDimensions + '</div>');
+        row.append('<div class="drive-col path">' + filePath + '</div>');
+        row.append('<div class="drive-col filesize">' + formattedSize + '</div>');
+
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+            row.addClass("folder");
+            row.on("click", async function () {
+                await navigateDotPath(filePath.replace(/ > /g, "."));
+            });
+        } else {
+            row.on("click", function () {
+                let downloadUrl = `https://drive.google.com/uc?export=download&id=${file.id}`;
+                if (file.mimeType.startsWith("video")) {
+                    window.location.href = downloadUrl;
+                } else {
+                    $("#player").html(`<img src="https://drive.google.com/thumbnail?id=${file.id}&sz=w1000" alt="${file.name}" data-download="${downloadUrl}">`);
+                    $("#player-container").addClass("active");
+                }
+            });
+        }
+
+        container.append(row);
+    });
+
+    updateLocation();
 }
 
 function checkUploadAllowed(file) {
@@ -498,6 +534,8 @@ $(document).ready(async function () {
                 data: JSON.stringify(payload),
                 success: function (response) {
                     if (response.status === 'success') {
+                        folderCache.clear();
+                        searchCache.clear();
                         let uploadedFile = response.data;
                         let icon = '<ion-icon name="document-outline"></ion-icon> ';
                         let formattedDate = uploadedFile.modifiedTime
